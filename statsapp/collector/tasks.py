@@ -4,19 +4,23 @@ from collector.configdata import *
 import json
 import urllib2
 
-def getSwitchList(hostIP):
-    url = 'http://{FLHostIP}:8080/wm/core/controller/switches/json'.format(FLHostIP=hostIP)
+def getStatistic(hostIP, statType, switchId='all'):
+    if statType == 'LISTSW':
+        url = 'http://{FLHostIP}:8080/wm/core/controller/switches/json'.format(FLHostIP=hostIP)
+    elif statType == 'port':
+        url = 'http://{FLHostIP}:8080/wm/core/switch/{swId}/{stat}/json'.format(FLHostIP=hostIP, swId=switchId, stat=statType)
+
     request = urllib2.Request(url)
     try:
         response = urllib2.urlopen(request)
-        responseText = response.read()
-        return responseText
+        jsonResponse = json.loads(response.read())
+        #print 'jsonResponse for '+ statType +': ' + str(jsonResponse)
+        return jsonResponse
     except urllib2.HTTPError, e:
         raise e
 
 def refreshSwitchList():
-    swList = getSwitchList(FloodLight.hostIP)
-    swList = json.loads(swList)
+    swList = getStatistic(FloodLight.hostIP, 'LISTSW')
     for sw in swList:
         #create switches in database
         swtype = 'pSwitch'
@@ -42,4 +46,18 @@ def refreshSwitchList():
                     })
             if created:
                 print 'port ' + new_port.hwAddr + ' created'
+
+def updatePortStat(switchId):
+    allPortStats = getStatistic(FloodLight.hostIP, 'port', switchId)[switchId]
+    for port in allPortStats:
+        currPort = Port.objects.filter(
+                switch__dpid__exact = switchId,
+                portNumber__exact = port['portNumber'],
+                )[0]
+        print currPort.hwAddr
+        currPort.rcvdBytes = port['receiveBytes']
+        currPort.save()
+
+        #create new statistic
+
 

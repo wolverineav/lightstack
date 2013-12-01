@@ -1,15 +1,14 @@
 import os
-#import sys, os
-#sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'statsapp'))
-#sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'collector'))
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "statsapp.settings")
-#from django.core.management import *
 from collector.tasks import *
+from collector.models import *
 import json
 import pprint
 
 def updateAll():
     refreshSwitchList()
+    sw = Switch.objects.all()
+    updatePortStat(sw[0].dpid)
 
 if __name__ == "__main__":
     print 'running periodic task'
