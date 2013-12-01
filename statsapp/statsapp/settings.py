@@ -26,6 +26,9 @@ TEMPLATE_DEBUG = True
 
 ALLOWED_HOSTS = []
 
+# TASTYPIE Settings
+TASTYPIE_DEFAULT_FORMATS = ['json']
+TASTYPIE_ALLOW_MISSING_SLASH = True
 
 # Application definition
 
@@ -37,6 +40,7 @@ INSTALLED_APPS = (
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'collector',
+    'tastypie',
 )
 
 MIDDLEWARE_CLASSES = (

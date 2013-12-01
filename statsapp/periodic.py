@@ -7,8 +7,10 @@ import pprint
 
 def updateAll():
     refreshSwitchList()
-    sw = Switch.objects.all()
-    updatePortStat(sw[0].dpid)
+    swList = Switch.objects.all()
+    for sw in swList:
+        updatePortStat(sw.dpid)
+    #updatePortStat(sw[0].dpid)
 
 if __name__ == "__main__":
     print 'running periodic task'

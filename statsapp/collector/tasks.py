@@ -35,6 +35,8 @@ def refreshSwitchList():
                 })
         if created:
             print sw['dpid'] + ' created'
+            #create stats as well
+            SwitchStatistic.objects.create(switch = new_sw)
         #create ports per switch
         for port in sw['ports']:
             new_port, created = Port.objects.get_or_create(
@@ -49,15 +51,22 @@ def refreshSwitchList():
 
 def updatePortStat(switchId):
     allPortStats = getStatistic(FloodLight.hostIP, 'port', switchId)[switchId]
+    currSwitch = Switch.objects.get(dpid__exact = switchId)
+    swPorts = Port.objects.filter(switch__dpid__exact = switchId)
+    newAggr = 0
     for port in allPortStats:
-        currPort = Port.objects.filter(
-                switch__dpid__exact = switchId,
-                portNumber__exact = port['portNumber'],
-                )[0]
-        print currPort.hwAddr
+        newAggr = newAggr + port['receiveBytes']
+        currPort = swPorts.filter(portNumber__exact = port['portNumber'])[0]
         currPort.rcvdBytes = port['receiveBytes']
         currPort.save()
 
-        #create new statistic
-
-
+    #create new statistic
+    oldStat = SwitchStatistic.objects.filter(switch__dpid__exact = switchId).order_by('-timestamp')[0]
+    if newAggr != oldStat.aggr:
+        newStat = SwitchStatistic.objects.create(switch = currSwitch)
+        newStat.aggr = newAggr
+        if newAggr < oldStat.aggr: #some field flipped, turn around
+            newStat.delta = (2147483647 - oldStat.aggr) + newAggr
+        else:
+            newStat.delta = newAggr - oldStat.aggr
+        newStat.save()

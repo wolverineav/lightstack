@@ -21,8 +21,13 @@ class Port(models.Model):
     rcvdBytes = models.BigIntegerField(null=True)
 
 class Statistic(models.Model):
-    #aggr = aggregate( sum of all ports min(recvd bytes, transmit bytes) )
-    #i dont collect any other stats for the time being, not reqd
-    statisticType = models.TextField(null=False)
-    #whole integer value, should wrap around
-    value = models.BigIntegerField(null=True)
+    #store the sum and delta
+    aggr = models.BigIntegerField(default = 0)
+    delta = models.BigIntegerField(default = 0)
+    timestamp = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        abstract = True
+
+class SwitchStatistic(Statistic):
+    switch = models.ForeignKey(Switch)
